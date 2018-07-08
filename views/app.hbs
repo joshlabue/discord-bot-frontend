@@ -134,7 +134,7 @@
                     statusSpan.innerHTML = 'Do not disturb';
                 }
 
-                if(game.name != '') statusSpan.innerHTML = 'Playing ' + game.name;
+                if(game != null) if(game.name != '') statusSpan.innerHTML = 'Playing ' + game.name;
             }
 
             function updateChannelDropdown() {
