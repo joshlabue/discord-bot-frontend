@@ -1,0 +1,84 @@
+html {
+    margin: 0px;
+    height: 100%;
+    width: 100%;
+}
+
+body {
+    margin: 0px;
+    background-color: #212227;
+    font-size:16px;
+    font-family: 'Open Sans', sans-serif;
+    height:100%; 
+    
+}  
+
+#settings {
+    background-color: #5762d5;
+    padding: 25px 25px 25px 25px;
+    height:65px;
+    color:#FDFFFF;
+
+    -webkit-user-select: none; /* Safari */        
+    -moz-user-select: none; /* Firefox */
+    -ms-user-select: none; /* IE10+/Edge */
+    user-select: none; /* Standard */
+}
+
+.settings-tile {
+    float: left;
+}
+
+.muted {
+    color: #d2d7df;
+    font-size:12px;
+}
+
+#profileImage {
+    border-radius: 50%;
+    width: 64px;
+    height: 64px;
+    float:left;
+}
+
+.palette {
+    color: #212227;
+    color: #5762d5;
+    color: #419d78;
+    color: #d2d7df;
+    color: #fdffff;
+    color: #e84855;
+    color: #ee8434;
+   
+}
+
+#messages {
+    height:100%;
+    padding-left: 25px;
+    display: flex;
+    justify-content: flex-end;
+    flex-direction: column;
+    overflow-y: auto;
+
+}
+
+.message {
+    bottom: 0px;
+    position: relative;
+    color: #d2d7df;
+}
+
+#messageBox {
+    background-color: #151619;
+    height:45px;
+    margin-top:5px;
+    display: flex;
+    padding-left: 15px;
+}
+
+#messageInput {
+    width:100%;
+    background:transparent;
+    border:none;
+    color: #d2d7df;
+}

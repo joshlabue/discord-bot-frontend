@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
+        <link rel="stylesheet" href="/app.css">
+    </head>
+    <body onresize="updateSizes()">
+        <div id="settings">
+            <div class="settings-tile">
+                <span class="categoryTitle">Server</span>
+                <div style="width:200px">
+                    <select id="serverList" onchange="updateChannelDropdown()" style="width:175px">
+                    </select>
+                </div>
+            </div>
+
+            <div class="settings-tile">
+                <span class="categoryTitle">Channel</span>
+                <div style="width:200px">
+                    <select id="channelList" onchange="updateSelectedChannel()" style="width:175px">
+                    </select>
+                </div>
+            </div>
+
+            <div class="settings-tile">
+                <span class="categoryTitle">Status</span>
+                <div style="width:200px">
+                    <select id="statusSelector" onchange="updateStatus()" style="width:140px">
+                        <option value="online">Online</option>
+                        <option value="idle">Idle</option>
+                        <option value="dnd">Do not disturb</option>
+                        <option value="offline">Invisible</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="settings-tile" style="margin-left: -33px">
+                <span class="categoryTitle">Game</span>
+                <div style="width:200px">
+                    <input id="gameInput" placeholder="Game">
+                </div>
+            </div>
+
+            <div class="settings-tile horiz-align" style="float: right;">
+                <img src="" id="profileImage" style="border: 3px solid #00000000" hidden>
+                <span style="float:left; padding-top:20px; padding-left: 10px; line-height:13px;"><span id="botName"></span><span class="muted" id="botDiscriminator" style=""></span>
+                <br>
+                <span class="muted" id="status" style=""></span>
+                </span>
+            </div>
+        </div>
+        <div id="messages">
+        </div>
+        <div id="messageBox">
+            <input type="text" placeholder="Message" id="messageInput">
+        </div>
+
+        <script src="/socket.io/socket.io.js"></script>
+        <script>
+            var servers = [];
+
+            updateSizes();
+
+            window.setInterval(() => {socket.emit('requestPresence')}, 15000);
+
+            var socket = io();
+            socket.on('profile', (profile) => {
+
+                socket.emit('requestPresence');
+
+                console.log(profile);
+                document.getElementById('botName').innerHTML = profile.name;
+                document.getElementById('botDiscriminator').innerHTML =  '#' + profile.discriminator;
+
+                document.title = 'Bot Client - ' + profile.name;
+
+                document.getElementById('profileImage').setAttribute('src', profile.url);
+                document.getElementById('profileImage').removeAttribute('hidden');
+
+                var serverList = document.getElementById('serverList');
+                while(serverList.firstChild) serverList.removeChild(serverList.firstChild);
+
+                servers = [];
+
+                for(var i = 0; i < profile.servers.length; i++) {
+                    var option = document.createElement('option');
+                    option.setAttribute('value', profile.servers[i].id)
+                    var name = document.createTextNode(profile.servers[i].name);
+                    option.appendChild(name);
+                    serverList.appendChild(option);
+
+                    var server = {
+                        name: profile.servers[i].name,
+                        id: profile.servers[i].id,
+                        channels: profile.servers[i].channels
+                    };
+
+                    servers.push(server);
+                }
+                updateChannelDropdown();
+            });
+
+            socket.on('message', (messageData) => {
+                console.log(messageData);
+                printMessage(messageData.authorName + '#' + messageData.authorDiscriminator, messageData.messageContent);
+            });
+
+            socket.on('status', (status) => {
+                setStatus(status.status, status.game);
+            });
+
+            function updateStatus() {
+                socket.emit('status', document.getElementById('statusSelector').value);
+            }
+
+            function setStatus(status, game) {
+                var picture = document.getElementById('profileImage');
+                var statusSpan = document.getElementById('status');
+
+                if(status == 'online') {
+                    picture.style = 'border: 3px solid #419d78';
+                    statusSpan.innerHTML = 'Online';
+                }
+                else if(status == 'idle') {
+                    picture.style = 'border: 3px solid #ee8434';
+                    statusSpan.innerHTML = 'Idle';
+                }
+                else if(status == 'offline') {
+                    picture.style = 'border: 3px solid #d2d7df';
+                    statusSpan.innerHTML = 'Offline';
+                }
+                else if(status == 'dnd') {
+                    picture.style = 'border: 3px solid #e84855';
+                    statusSpan.innerHTML = 'Do not disturb';
+                }
+
+                if(game.name != '') statusSpan.innerHTML = 'Playing ' + game.name;
+            }
+
+            function updateChannelDropdown() {
+                var serverOption = document.getElementById('serverList').selectedIndex;
+                var server = servers[serverOption];
+
+                var channelList = document.getElementById('channelList');
+                while(channelList.firstChild) channelList.removeChild(channelList.firstChild);
+
+                for(var i = 0; i < server.channels.length; i++) {
+                    var option = document.createElement('option');
+                    option.setAttribute('value', server.channels[i].id);
+                    var name = document.createTextNode('#' + server.channels[i].name);
+                    option.appendChild(name);
+                    channelList.appendChild(option);
+                }
+
+                updateSelectedChannel();
+            }
+
+            function printMessage(author, message) {
+                var messageDiv = document.getElementById('messages');
+
+                var messageSpan = document.createElement('span');
+                messageSpan.setAttribute('class', 'message');
+
+                var authorSpan = document.createElement('b');
+                authorSpan.appendChild(document.createTextNode(author + ' '));
+                
+                messageSpan.appendChild(authorSpan);
+                messageSpan.appendChild(document.createTextNode(message));
+
+                messageDiv.appendChild(document.createElement('br'));
+                messageDiv.appendChild(messageSpan);
+            }
+            
+            function updateSizes() {
+                document.getElementById('messages').style.height = window.innerHeight-165 + 'px'
+            }
+
+            function updateSelectedChannel() {
+                var serverOption = document.getElementById('serverList').selectedIndex;
+                var server = servers[serverOption];
+
+                var channelOption = document.getElementById('channelList').selectedIndex;
+                var channel = server.channels[channelOption];
+
+                socket.emit('selectChannel', channel.id);
+
+                document.getElementById('messages').innerHTML = '';
+            }
+
+            var messageInput = document.getElementById('messageInput');
+            messageInput.addEventListener("keydown", (e) => {
+                if(e.key === "Enter") {
+                    if (!/^\s+$/.test(messageInput.value)) {
+                        socket.emit('message', messageInput.value);
+                        messageInput.value = '';
+                    }
+                }
+            });
+
+            var gameInput = document.getElementById('gameInput');
+            gameInput.addEventListener("keydown", (e) => {
+                if(e.key === "Enter") {
+                    if (!/^\s+$/.test(gameInput.value)) {
+                        socket.emit('game', gameInput.value);
+                    }
+                }
+            });
+        </script>
+    </body>
+</html>
